@@ -71,7 +71,7 @@ const configs = []
 
 // CSS 、js 入口配置
 const CSS_JS_PATH = {
-  pattern: [`./${projectName}/css/*.css`, `./${projectName}/js/*.js`],
+  pattern: [`./${projectName}/css/*.less`, `./${projectName}/js/*.js`],
   src: path.join(__dirname, `${projectName}`),
   dst: path.resolve(__dirname, `dist/${projectName}`),
 }
@@ -81,7 +81,7 @@ function getCssJsEntries(config) {
   const fileList = glob.sync(config.pattern)
   return fileList.reduce(function (previous, current) {
      const filePath = path.parse(path.relative(config.src, current))
-     const withoutSuffix = path.join(filePath.dir, filePath.base).replace(/\\/g, '/')
+     const withoutSuffix = path.join(filePath.dir, `${filePath.name}.${filePath.dir}`).replace(/\\/g, '/')
      previous[withoutSuffix] = path.resolve(__dirname, current).replace(/\\/g, '/')
      return previous
   }, {})
@@ -137,7 +137,7 @@ const configJs = {
       path.resolve(projectName),
       path.resolve('node_modules')
     ],
-    'extensions': ['.js', '.css']
+    'extensions': ['.js', '.css', '.less']
   },
 
   module: {
@@ -153,10 +153,26 @@ const configJs = {
         ],
         loader: 'babel-loader'
       },
+      // css
       {
         test: /\.css$/,
         loader: ExtractTextPlugin.extract('css-loader')
-      }
+      },
+      // less
+      {
+        test: /\.less$/,
+        use:ExtractTextPlugin.extract({
+          use:[
+            {
+              loader:'css-loader'
+            }, {
+              loader:'less-loader'
+            }
+          ],
+          fallback:'style-loader'
+        })
+    },
+
     ]
   },
 
@@ -178,7 +194,8 @@ if (isDev) {
 
   configJs.mode = 'development';
   // devtool
-  configJs.devtool = 'source-map';
+  // configJs.devtool = 'source-map';
+  console.warn('isDev:')
 
   configJs.plugins.push(
     new CleanWebpackPlugin([`dist/${projectName}/`], {
@@ -223,12 +240,27 @@ if (isPro) {
   configJs.plugins.push(
     new webpack.HashedModuleIdsPlugin(),
 
-    new CleanWebpackPlugin(['build'], {
+    new CleanWebpackPlugin([`dist/${projectName}/`], {
       root: path.resolve('./'),
       verbose: true,
       dry: false
     })
   );
+
+  htmlArr.forEach(function(item) {
+    configJs.plugins.push(
+      new HtmlWebpackPlugin({
+        filename: `${item}.html`,
+        template: path.resolve(`./${projectName}`, `${item}.html`),
+        hash: true,       // true | false。如果是true，会给所有包含的script和css添加一个唯一的webpack编译hash值。这对于缓存清除非常有用。
+        inject: true,     // | 'head' | 'body' | false  ,注入所有的资源到特定的 template 或者 templateContent 中，如果设置为 true 或者 body，所有的 javascript 资源将被放置到 body 元素的底部，'head' 将放置到 head 元素中。
+        chunks: [`css/${item}.css`, `js/${item}.js`],   // 使用chunks 需要指定entry 入口文件中的哪一个模块
+        minify: {
+          removeComments: true
+        },
+      })
+    )
+  })
 
   configJs.optimization = {
     minimizer: [

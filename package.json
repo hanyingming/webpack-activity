@@ -1,13 +1,13 @@
 {
   "name": "webpack-h5-activity",
   "version": "1.0.1",
-  "description": "活动项目的集成处理 依据名利分别压缩打包处理项目",
+  "description": "webpack处理活动页面",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env NODE_ENV=development webpack --watch --projectName ",
     "build:dev": "cross-env NODE_ENV=development webpack --optimize-minimize --projectName",
-    "build:prod": "cross-env NODE_ENV=production webpack --progress --optimize-minimize --display-modules --display-reasons --display-error-details --color"
+    "build:prod": "cross-env NODE_ENV=production webpack --progress --optimize-minimize --display-modules --display-reasons --display-error-details --color --projectName"
   },
   "author": "",
   "license": "ISC",
@@ -25,19 +25,21 @@
     "clean-webpack-plugin": "^0.1.19",
     "cross-env": "^5.2.0",
     "css-loader": "^1.0.0",
+    "cssnano": "^4.1.10",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "globby": "^9.2.0",
     "html-webpack-plugin": "^3.2.0",
     "jest": "^23.6.0",
+    "less": "^3.9.0",
+    "less-loader": "^5.0.0",
+    "mini-css-extract-plugin": "^0.7.0",
     "optimize-css-assets-webpack-plugin": "^5.0.1",
     "postcss-loader": "^3.0.0",
-    "style-loader": "^0.23.0",
+    "style-loader": "^0.23.1",
     "uglify-js": "^3.4.8",
     "uglifyjs-webpack-plugin": "^1.3.0",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0",
-    "yargs": "^13.2.4",
-    "cssnano": "^4.1.10",
-    "mini-css-extract-plugin": "^0.7.0",
-    "globby": "^9.2.0"
+    "yargs": "^13.2.4"
   }
 }
