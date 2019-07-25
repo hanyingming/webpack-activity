@@ -61,37 +61,12 @@ const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 const isDev = process.env.NODE_ENV === 'development'
-const isPro = process.env.NODE_ENV === 'production'
 const cssIdentifier = '[local]'
 
 console.warn('projectName', projectName)
-console.warn('isDeve: ', isDev)
+console.warn('isDev: ', isDev)
 
 const configs = []
-
-// CSS 、js 入口配置
-const CSS_JS_PATH = {
-  // pattern: [`./${projectName}/css/*.less`, `./${projectName}/css/*.css`, `./${projectName}/js/*.js`],
-  pattern: [`./${projectName}/js/*.js`],
-  src: path.join(__dirname, `${projectName}`),
-  dst: path.resolve(__dirname, `dist/${projectName}`),
-}
-
-// 遍历除所有需要打包的CSS、js文件路径
-function getCssJsEntries(config) {
-  const fileList = glob.sync(config.pattern)
-  return fileList.reduce(function (previous, current) {
-     const filePath = path.parse(path.relative(config.src, current))
-     const withoutSuffix = path.join(filePath.dir, `${filePath.name}.${filePath.dir}`).replace(/\\/g, '/')
-     previous[withoutSuffix] = path.resolve(__dirname, current).replace(/\\/g, '/')
-     return previous
-  }, {})
-}
-
-const entrys = getCssJsEntries(CSS_JS_PATH);
-
-console.warn(entrys, 'entrys')
-
 
 // html 入口配置
 const HTML_PATH = {
@@ -108,31 +83,43 @@ function getHtmlFileNames(config) {
   })
 }
 
+// 所有匹配的html文件名称集合
 const htmlArr = getHtmlFileNames(HTML_PATH)
 
-console.warn('htmlArr:', htmlArr)
+// 需要索引的入口文件匹配模式
+const JsPatternArr = htmlArr.map(item => `./${projectName}/js/${item}.js`)
+// js 入口配置 => 仅 自动匹配 项目/js 目录下的入口文件
+const JS_PATH = {
+  pattern: JsPatternArr,
+  src: path.join(__dirname, `${projectName}`),
+  dst: path.resolve(__dirname, `dist/${projectName}`),
+}
+
+// 遍历所有匹配的文件路径
+function getJsEntries(config) {
+  const fileList = glob.sync(config.pattern)
+  return fileList.reduce(function (previous, current) {
+     const filePath = path.parse(path.relative(config.src, current))
+     const withoutSuffix = path.join(filePath.dir, `${filePath.name}.${filePath.dir}`).replace(/\\/g, '/')
+     previous[withoutSuffix] = path.resolve(__dirname, current).replace(/\\/g, '/')
+     return previous
+  }, {})
+}
+
+// 遍历所有入口文件
+const entrys = getJsEntries(JS_PATH);
+
+console.warn(entrys, 'entrys')
 
 // webpack配置
 const configJs = {
   mode: 'none',
-  // entry: {
-  //   'js/a': `./${projectName}/`,
-  // },
-  // entry: {
-  //   'css/index.css': 'E:\\myworkspace\\space_vs\\other\\webpack-h5-activity\\src\\css\\index.css',
-  //   'css/www.css': 'E:\\myworkspace\\space_vs\\other\\webpack-h5-activity\\src\\css\\www.css',
-  //   'js/index.js': 'E:\\myworkspace\\space_vs\\other\\webpack-h5-activity\\src\\js\\index.js',
-  //   'js/kk.js': 'E:\\myworkspace\\space_vs\\other\\webpack-h5-activity\\src\\js\\kk.js'
-  // },
-
   entry: entrys,
-
   output: {
     filename: '[name]',
     path: path.resolve(__dirname, `dist/${projectName}`),
     publicPath: `./`,
   },
-
   resolve: {
     modules: [
       path.resolve(projectName),
@@ -140,10 +127,8 @@ const configJs = {
     ],
     'extensions': ['.js', '.css', '.less']
   },
-
   module: {
     rules: [
-      // Scripts
       {
         test: /\.js$/,
         include: [
@@ -158,13 +143,10 @@ const configJs = {
           }
         ],
       },
-      // css
       {
         test: /\.css$/,
         use: [
-          // { loader: 'style-loader' },
           // { loader: 'file-loader' },
-          // 'file-loader',
           {
             loader: 'style-loader'
           },
@@ -182,48 +164,7 @@ const configJs = {
               ]
             }
           }]
-        // loader: ExtractTextPlugin.extract({
-        //   fallback: 'file-loader',
-        //   use: [
-        //     { loader: 'css-loader', options: { modules: true, importLoaders: 1 } },
-        //     {
-        //       loader: 'postcss-loader',
-        //       options: {           // 如果没有options这个选项将会报错 No PostCSS Config found
-        //         plugins: (loader) => [
-        //           require('postcss-import')({ root: loader.resourcePath }),
-        //           require('autoprefixer')(), //CSS浏览器兼容
-        //           require('cssnano')()  //压缩css
-        //         ]
-        //       }
-        //     }
-        //   ]
-        // })
-        // use:[
-        //   'style-loader',
-        //   {
-        //     loader:'css-loader',
-        //     options: {
-        //       minimize:true,
-        //       //支持@important引入css
-        //       importLoaders: 1
-        //     }
-        //   }, {
-        //     loader: 'postcss-loader',
-        //     options: {
-        //       plugins: function() {
-        //         return [
-        //           //一定要写在require("autoprefixer")前面，否则require("autoprefixer")无效
-        //           require('postcss-import')(),
-        //           require("autoprefixer")({
-        //             "overrideBrowserslist": ["Android >= 4.1", "iOS >= 7.0", "ie >= 8"]
-        //           })
-        //         ]
-        //       }
-        //     }
-        //   }
-        // ],
       },
-      // less
       {
         test: /\.less$/,
         use:ExtractTextPlugin.extract({
@@ -254,14 +195,14 @@ const configJs = {
   ]
 };
 
- // dev mode
+// 开发模式
 if (isDev) {
-
   configJs.mode = 'development';
-  // devtool
-  // configJs.devtool = 'source-map';
-  console.warn('isDev:')
 
+  // devtool
+  configJs.devtool = 'source-map';
+
+  // 清空打包项目目录
   configJs.plugins.push(
     new CleanWebpackPlugin([`dist/${projectName}/`], {
       root: path.resolve(`./`),
@@ -270,7 +211,7 @@ if (isDev) {
     })
   );
 
-  // 配置html文件注入规则：分别注入对应的css、js文件
+  // 配置html文件注入规则：入口文件js
   htmlArr.forEach(function(item) {
     configJs.plugins.push(
       new HtmlWebpackPlugin({
@@ -278,8 +219,7 @@ if (isDev) {
         template: path.resolve(`./${projectName}`, `${item}.html`),
         hash: true,       // true | false。如果是true，会给所有包含的script和css添加一个唯一的webpack编译hash值。这对于缓存清除非常有用。
         inject: true,     // | 'head' | 'body' | false  ,注入所有的资源到特定的 template 或者 templateContent 中，如果设置为 true 或者 body，所有的 javascript 资源将被放置到 body 元素的底部，'head' 将放置到 head 元素中。
-        chunks: (entrys[`css/${item}.css`] && entrys[`js/${item}.js`]) ? [`css/${item}.css`, `js/${item}.js`]
-          : (entrys[`css/${item}.css`] ? [`css/${item}.css`] : (entrys[`js/${item}.js`] ? [`js/${item}.js`]: [])),   // 使用chunks 需要指定entry 入口文件中的哪一个模块
+        chunks: entrys[`js/${item}.js`] ? [`js/${item}.js`] : [],   // 使用chunks 需要指定entry 入口文件中的哪一个模块
         minify: {
           removeComments: true,caseSensitive:false,//是否大小写敏感              
           collapseWhitespace:true, //是否去除空格               
@@ -289,8 +229,8 @@ if (isDev) {
       })
     )
   })
-  // entrys.filter()
 
+  // 启动 browser-sync 实时热加载
   configJs.plugins.push(
     new BrowserSyncPlugin({
         server: {
@@ -303,8 +243,8 @@ if (isDev) {
 
 }
 
-// production mode
-if (isPro) {
+// 生产模式
+if (!isDev) {
   configJs.mode = 'production';
 
   configJs.plugins.push(
