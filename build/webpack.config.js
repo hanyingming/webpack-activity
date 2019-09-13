@@ -6,6 +6,7 @@ const InjectCDN = require('./InjectCDN')
 // webpack plugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 
@@ -40,8 +41,8 @@ const rejectJs = []
 const api = getApiEnv()
 if(api === 'dev'){
   console.warn('dev:', path.resolve(__dirname, `../config/dev/index.js`))
-  entries['config/client.js'] = path.resolve(__dirname, `../config/dev/index.js`)
-  rejectJs.push('./config/client.js')
+  entries['config/index.js'] = path.resolve(__dirname, `../config/dev/index.js`)
+  rejectJs.push('./config/index.js')
 }
 // 获取isConsole, 默认不注入
 const isConsole = rejectVConsole()
@@ -62,7 +63,6 @@ if(isRem) {
 }
 
 const isDev = process.env.NODE_ENV === 'development'
-const cssIdentifier = '[local]'
 console.warn('isDev:', isDev, process.env.NODE_ENV)
 
 // 获取所有入口文件
@@ -105,12 +105,6 @@ if (isDev) {
         hash: true,       // true | false。如果是true，会给所有包含的script和css添加一个唯一的webpack编译hash值。这对于缓存清除非常有用。
         inject: true,     // | 'head' | 'body' | false  ,注入所有的资源到特定的 template 或者 templateContent 中，如果设置为 true 或者 body，所有的 javascript 资源将被放置到 body 元素的底部，'head' 将放置到 head 元素中。
         chunks: entries[`js/${item}.js`] ? [`js/${item}.js`] : [],   // 使用chunks 需要指定entry 入口文件中的哪一个模块
-        minify: {
-          caseSensitive:false,//是否大小写敏感              
-          collapseWhitespace:true, //是否去除空格               
-          removeAttributeQuotes:true, // 去掉属性引用               
-          removeComments:true, //去注释
-        },
       })
     )
     config.plugins.push(new InjectCDN({
@@ -170,6 +164,40 @@ if (!isDev) {
       js: rejectJs,
     }))
   })
+
+  config.plugins.push(
+    new OptimizeCssAssetsPlugin({ // css文件压缩
+      assetNameRegExp: /\.css$/g,
+      cssProcessor: require('cssnano'),
+      cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
+      canPrint: true
+    })
+  )
+
+  config.optimization = {
+    minimizer: [ // 压缩
+      new UglifyJsPlugin({
+        uglifyOptions: {
+          ie8: false,
+          safari10: true,
+          ecma: 5,
+          output: {
+            comments: /^!/,
+            beautify: false
+          },
+          compress: {
+            warnings: false,
+            drop_debugger: true,
+            drop_console: true,
+            collapse_vars: true,
+            reduce_vars: true
+          },
+          warnings: false,
+          sourceMap: true
+        }
+      }),
+    ]
+  }
 
   // 启动 browser-sync 实时热加载
   config.plugins.push(

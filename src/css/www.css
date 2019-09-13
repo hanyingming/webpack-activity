@@ -3,8 +3,9 @@ body {
     /*background: url("../images/img01.jpg") no-repeat center;*/
 }
 .test {
-    display: block;
-    height: 500px;
+    display: flex;
+    height: 100px;
     font-size: 30px;
+    flex-direction: column;
     /*background: url("../img/img03.jpg") no-repeat center;*/
 }

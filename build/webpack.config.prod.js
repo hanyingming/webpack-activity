@@ -6,6 +6,7 @@ const InjectCDN = require('./InjectCDN')
 // webpack plugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 
 const {
@@ -39,8 +40,8 @@ const rejectJs = []
 const api = getApiEnv()
 if(api === 'dev'){
   console.warn('dev:', path.resolve(__dirname, `../config/dev/index.js`))
-  entries['config/client.js'] = path.resolve(__dirname, `../config/dev/index.js`)
-  rejectJs.push('./config/client.js')
+  entries['config/index.js'] = path.resolve(__dirname, `../config/dev/index.js`)
+  rejectJs.push('./config/index.js')
 }
 // 获取isConsole, 默认不注入
 const isConsole = rejectVConsole()
@@ -58,8 +59,6 @@ if(isRem) {
   rejectJs.push('https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js')
   rejectCss.push('https://cdn.bootcss.com/normalize/8.0.1/normalize.min.css')
 }
-
-const cssIdentifier = '[local]'
 
 // 获取所有入口文件
 const htmlArr = getHtmlNameArray(projectName)
@@ -116,6 +115,15 @@ htmlArr.forEach(function(item) {
   }))
 })
 
+config.plugins.push(
+  new OptimizeCssAssetsPlugin({ // css文件压缩
+    assetNameRegExp: /\.css$/g,
+    cssProcessor: require('cssnano'),
+    cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
+    canPrint: true
+  })
+)
+
 config.optimization = {
   minimizer: [ // 压缩
     new UglifyJsPlugin({
@@ -139,6 +147,6 @@ config.optimization = {
       }
     }),
   ]
-};
+}
 
 module.exports = config;
