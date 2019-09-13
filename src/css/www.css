@@ -1,6 +1,10 @@
 body {
     font-family: 'Courier New', Courier, monospace;
+    /*background: url("../images/img01.jpg") no-repeat center;*/
 }
 .test {
+    display: block;
+    height: 500px;
     font-size: 30px;
+    /*background: url("../img/img03.jpg") no-repeat center;*/
 }

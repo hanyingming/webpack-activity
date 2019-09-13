@@ -75,7 +75,58 @@ const config = {
           fallback:'style-loader'
         })
       },
-
+      {
+        test:/\.(png|svg|jpeg|jpg|gif)$/,
+        use:[
+          {
+            loader:'file-loader',
+            options: {
+              // name:'[name]', // [path] 上下文环境路径
+              name:'[name][sha512:hash:base64:7].[ext]', // 去缓存
+              publicPath: './images/', // 公共路径
+              outputPath: './images/', // 输出路径
+            }
+          },
+          { // 图片压缩
+            loader: "image-webpack-loader",
+            options: {
+              // bypassOnDebug: true, // webpack@1.x
+              // disable: true, // webpack@2.x and newer
+              mozjpeg: {
+                progressive: true,
+                quality: 65
+              },
+              // optipng.enabled: false will disable optipng
+              optipng: {
+                enabled: false,
+              },
+              pngquant: {
+                quality: [0.65, 0.90],
+                speed: 4
+              },
+              gifsicle: {
+                interlaced: false,
+              },
+              // the webp option will enable WEBP
+              webp: {
+                quality: 75
+              }
+            }
+          }
+        ]
+      },
+      {
+        test: /\.html$/, // 支持html中的img图片引入
+        use: [
+          {
+            loader:'html-loader',
+            options: {
+              arrts: ['img:src','img:data-src'],
+              minimize: false  //是否压缩html
+            }
+          }
+        ]
+      }
     ]
   },
   plugins: []
