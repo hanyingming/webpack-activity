@@ -1,11 +1,12 @@
 const path = require('path')
+const webpack = require('webpack')
 const webpackMerge = require('webpack-merge')
 const InjectCDN = require('./InjectCDN')
 
 // webpack plugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
-const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 
 const {
   getProjectName,
@@ -46,7 +47,6 @@ const isConsole = rejectVConsole()
 // 获取是否注入rem.js, pc无需注入，移动端注入
 const isRem = rejectRemJs()
 
-
 console.warn('api:', api)
 console.warn('isConsole:', isConsole)
 console.warn('isRem:', isRem)
@@ -73,25 +73,26 @@ console.warn(entries, 'entries')
 // webpack 配置
 const configBase = require('./webpack.base')
 const config = webpackMerge(configBase, {
-  mode: 'development',
+  mode: 'production',
   target: 'web',
   entry: entries,
 })
 
-// 开发模式
-// devtool
-config.devtool = 'source-map';
-
-// 清空打包项目目录
+// 生产模式
 config.plugins.push(
+  new webpack.HashedModuleIdsPlugin({
+    hashFunction: 'sha256',
+    hashDigest: 'hex',
+    hashDigestLength: 20
+  }),
+
   new CleanWebpackPlugin([`dist/${projectName}/`], {
-    root: path.resolve(`./`),
+    root: path.resolve('./'),
     verbose: true,
     dry: false
   })
 );
 
-// 配置html文件注入规则：入口文件js
 htmlArr.forEach(function(item) {
   config.plugins.push(
     new HtmlWebpackPlugin({
@@ -108,22 +109,36 @@ htmlArr.forEach(function(item) {
       },
     })
   )
+  // 配置cdn 静态资源
   config.plugins.push(new InjectCDN({
     css: rejectCss,
     js: rejectJs,
   }))
 })
 
-// 启动 browser-sync 实时热加载
-config.plugins.push(
-  new BrowserSyncPlugin({
-    server: {
-      baseDir: `./dist/${projectName}`,
-    },
-  }, {
-    reload: true,
-  })
-)
-
+config.optimization = {
+  minimizer: [ // 压缩
+    new UglifyJsPlugin({
+      uglifyOptions: {
+        ie8: false,
+        safari10: true,
+        ecma: 5,
+        output: {
+          comments: /^!/,
+          beautify: false
+        },
+        compress: {
+          warnings: false,
+          drop_debugger: true,
+          drop_console: true,
+          collapse_vars: true,
+          reduce_vars: true
+        },
+        warnings: false,
+        sourceMap: true
+      }
+    }),
+  ]
+};
 
 module.exports = config;

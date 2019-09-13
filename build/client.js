@@ -4,6 +4,14 @@ const chalk = require('chalk')
 const inquirer = require('inquirer');
 const cProcess = require('child_process')
 
+const {
+  checkoutValidDir
+} = require('../utils')
+
+
+// 获取NODE_ENV
+const nodeEnv = process.env.NODE_ENV
+
 // 校验参数
 validParam = param => new Promise((resolve, reject) => {
   let result = process.env[`npm_config_${param.key}`]
@@ -37,7 +45,16 @@ validParam = param => new Promise((resolve, reject) => {
         process.stdin.pause()
         result = val.trim()
         if (result.length > 0) {
-          resolve(result)
+          if(param.validInput) { // 校验输入
+            if (!checkoutValidDir(result)) {
+              console.log(chalk.red(`${result} is not exist。please checkout。 \n`))
+              resolve(validParam(param))
+            } else {
+              resolve(result)
+            }
+          } else {
+            resolve(result)
+          }
         } else {
           console.log(chalk.red(`${param.key} can not input empty char!`))
           resolve(validParam(param))
@@ -71,15 +88,26 @@ initFunc = async() => {
     type: 'input',
     key: 'pro', // 项目名称
     message: 'please input your projectName.',
+    validInput: true
   }, {
     type: 'list',
     key: 'api', // 项目名称
     message: 'please select your api environment.',
     choices: ['dev', 'test', 'prod']
+  }, {
+    type: 'list',
+    key: 'env', // 部署环境 ['pc', 'mobile']
+    message: 'please select your deploy environment.',
+    choices: ['pc', 'mobile']
+  }, {
+    type: 'list',
+    key: 'console', // 是否注入调试
+    message: 'please confirm your project reject vConsole.',
+    choices: ['false', 'true']
   }]
   // 校验必要参数是否输入 pro: 项目名称； api: 项目api环境
   await execValidParamFunc(params)
-  const cmd = 'npm run dev ' + params.map(item => `--${item.key}=${item.result}`).join(' ')
+  const cmd = `npm run ${nodeEnv} ` + params.map(item => `--${item.key}=${item.result}`).join(' ')
   // 启动子线程运行webpack打包命令
   let devProcess = cProcess.exec(cmd, { detached: true }, function (error, stout, stderr) {
     if(error) console.log(error)
@@ -88,9 +116,5 @@ initFunc = async() => {
   devProcess.stderr.pipe(process.stderr)
 }
 
-
+// 执行入口
 initFunc()
-
-// 获取项目是否注入VConsole.js
-
-

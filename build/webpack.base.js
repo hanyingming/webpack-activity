@@ -78,18 +78,19 @@ const config = {
 
     ]
   },
+  plugins: []
 
-  plugins: [
-    new ExtractTextPlugin({
-      filename: `[name]`
-    }),
-    new OptimizeCssAssetsPlugin({
-      assetNameRegExp: /\.css$/g,
-      cssProcessor: require('cssnano'),
-      cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
-      canPrint: true
-    }),
-  ]
+  // plugins: [
+  //   new ExtractTextPlugin({
+  //     filename: `[name]`
+  //   }),
+  //   new OptimizeCssAssetsPlugin({
+  //     assetNameRegExp: /\.css$/g,
+  //     cssProcessor: require('cssnano'),
+  //     cssProcessorOptions: { safe: true, discardComments: { removeAll: true } },
+  //     canPrint: true
+  //   }),
+  // ]
 }
 
 module.exports = config
