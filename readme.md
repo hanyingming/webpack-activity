@@ -16,4 +16,9 @@
             2. 根据html文件名匹配js目录下相同名称的入口js文件 并自动注入到 html 中
     5. 在入口文件中 引入相关的 css、js文件
     
+### 项目运行
+    1.开发
+        npm run dev --pro=项目目录
+    2.打包
+        npm run build --pro=项目目录
          
